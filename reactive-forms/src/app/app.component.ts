@@ -1,0 +1,109 @@
+import { Component, OnInit } from '@angular/core';
+//import { FormGroup, FormControl } from '@angular/forms';
+import { FormBuilder,Validator, Validators, FormGroup,FormArray} from '@angular/forms';
+import { ForbiddenNameValidator } from './shared/username.validator';
+import { PasswordValidator } from './shared/password.validator';
+import { RegistrationService } from './registration.service';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent implements OnInit {
+
+  constructor(private fb:FormBuilder,private _registrationService:RegistrationService){
+
+  }
+
+get userName(){
+  return this.registrationForm.get('userName');
+}
+
+get email(){
+  return this.registrationForm.get('email');
+}
+
+get alternateEmails(){
+  return this.registrationForm.get('alternateEmails') as FormArray;
+}
+
+addAlternateEmail(){
+  console.log("clicked");
+  this.alternateEmails.push(this.fb.control(''));
+}
+
+  title = 'reactive-forms';
+
+  registrationForm:FormGroup;
+
+ /*  registrationForm=new FormGroup({
+    userName: new FormControl('Vishwas'),
+    password: new FormControl(''),
+    confirmPassword: new FormControl(''),
+    address: new FormGroup({
+          city: new FormControl(''),
+          state: new FormControl(''),
+          postalCode: new FormControl('')
+       })
+  }); */
+
+/* 
+  loadApi(){
+    this.registrationForm.setValue({
+      userName: 'ashwin' ,
+      password:  'karki',
+      confirmPassword : 'karki',
+      address : {
+            city: 'kathmandu',
+            state: 'kathmandu',
+            postalCode: '009776'
+
+                }
+         
+          });
+  } */
+
+  ngOnInit(){
+   this.registrationForm=this.fb.group({
+      userName: ['',[Validators.required,Validators.minLength(3),ForbiddenNameValidator(/password/)]],
+      email:[''],
+      subscribe: [false],
+      password: [''],
+      confirmPassword : [''],
+      address: this.fb.group({
+         city:[''],
+         state:[''],
+         postalCode:['']
+      }),
+      alternateEmails:this.fb.array([])
+ }, {validator:PasswordValidator} );
+
+
+  
+ this.registrationForm.get('subscribe').valueChanges
+ .subscribe(checkedValue => {
+   console.log("htiited on value change");
+   const email = this.registrationForm.get('email');
+   if (checkedValue) {
+     email.setValidators(Validators.required);
+   } else {
+     email.clearValidators();
+   }
+   email.updateValueAndValidity();
+ });
+
+}
+
+onSubmit(){
+  this._registrationService.register(this.registrationForm.value)
+  .subscribe(
+    response => console.log('Success',response),
+    error => console.log('Error',error) 
+  ) 
+  console.log(this.registrationForm.value);
+}
+
+}
+
+
